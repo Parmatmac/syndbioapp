@@ -1,0 +1,172 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site1.master.cs" Inherits="EharnaBioapp.Site1" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head id="Head1" runat="server">
+    <title></title>
+    <link href="~/Styles/Site.css" rel="stylesheet" type="text/css" />
+
+       <script type="text/javascript" src="Scripts/jquery-1.8.2.js"></script>
+    <script type="text/javascript" src="Scripts/mfs100-9.0.2.6_XHR.js"></script>
+    <script language="javascript" type="text/javascript">
+
+
+        var quality = 60; //(1 to 100) (recommanded minimum 55)
+        var timeout = 10; // seconds (minimum=10(recommanded), maximum=60, unlimited=0 )
+
+        function GetInfo() {
+            document.getElementById('tdSerial').innerHTML = "";
+            document.getElementById('tdLocalMac').innerHTML = "";
+            document.getElementById('tdLocalIP').innerHTML = "";
+            document.getElementById('tdSystemID').innerHTML = "";
+            document.getElementById('tdPublicIP').innerHTML = "";
+
+
+            var key = document.getElementById('txtKey').value;
+
+            var res;
+            if (key.length == 0) {
+                res = GetMFS100Info();
+            }
+            else {
+                res = GetMFS100KeyInfo(key);
+            }
+
+            if (res.httpStaus) {
+
+
+                if (res.data.ErrorCode == "0") {
+                    document.getElementById('tdSerial').innerHTML = res.data.DeviceInfo.SerialNo;
+                    document.getElementById('tdLocalMac').innerHTML = res.data.DeviceInfo.LocalMac;
+                    document.getElementById('tdLocalIP').innerHTML = res.data.DeviceInfo.LocalIP;
+                    document.getElementById('tdSystemID').innerHTML = res.data.DeviceInfo.SystemID;
+                    document.getElementById('tdPublicIP').innerHTML = res.data.DeviceInfo.PublicIP;
+                }
+            }
+            else {
+                alert(res.err);
+            }
+            return false;
+        }
+
+
+        var newfinger;
+
+        function Capture() {
+            try {
+
+                //document.getElementById('empid').value = "";
+                if (document.getElementById('empid').value == "") {
+                    alert('Please enter employee id');
+                }
+
+                else {
+
+                    var res = CaptureFinger(quality, timeout);
+                    if (res.httpStaus) {
+
+                        // document.getElementById('txtStatus').value = "ErrorCode: " + res.data.ErrorCode + " ErrorDescription: " + res.data.ErrorDescription;
+
+                        if (res.data.ErrorCode == "0") {
+                            // document.getElementById('imgFinger').src = "data:image/bmp;base64," + res.data.BitmapData;
+                            var imageinfo = "Quality: " + res.data.Quality + " Nfiq: " + res.data.Nfiq + " W(in): " + res.data.InWidth + " H(in): " + res.data.InHeight + " area(in): " + res.data.InArea + " Resolution: " + res.data.Resolution + " GrayScale: " + res.data.GrayScale + " Bpp: " + res.data.Bpp + " WSQCompressRatio: " + res.data.WSQCompressRatio + " WSQInfo: " + res.data.WSQInfo;
+                            //                       
+
+                            // document.getElementById('empid').value = res.data.IsoTemplate;
+
+                            newfinger = res.data.IsoTemplate;
+
+                            Verify();
+                        }
+                    }
+                    else {
+                        alert(res.err);
+                    }
+                }
+            }
+            catch (e) {
+                alert(e);
+            }
+            return false;
+        }
+
+        function Verify() {
+            try {
+                var isotemplatehid = document.getElementById('txtFingTemp').value;
+                var res = VerifyFinger(newfinger, isotemplatehid);
+
+                if (res.httpStaus) {
+                    if (res.data.Status) {
+                        alert("Biometric Authintication Successful... You are redirecting to next page...!!");
+                        location.href = "Default.aspx";
+                    }
+                    else {
+                        if (res.data.ErrorCode != "0") {
+                            alert(res.data.ErrorDescription);
+                        }
+                        else {
+                            alert("Biometric Authintication Failed. Try Again...!!");
+                        }
+                    }
+                }
+                else {
+                    alert(res.err);
+                }
+            }
+            catch (e) {
+                alert(e);
+            }
+            return false;
+
+        }
+           
+     
+    </script>
+   
+
+
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server">
+    </asp:ContentPlaceHolder>
+    
+</head>
+<body>
+    <form id="Form1" runat="server">
+    <div class="page">
+        <div class="header">
+            <div class="logintitle">
+                <h1>
+                    Biometric Synd Login Authintication
+                </h1>
+            </div>
+           
+            <div class="clear hideSkiplink">
+               <%-- <asp:Menu ID="NavigationMenu" runat="server" CssClass="menu" EnableViewState="false" IncludeStyleBlock="false" Orientation="Horizontal">
+                    <Items>
+                        <asp:MenuItem NavigateUrl="~/Default.aspx" Text="Home"/>
+                        <asp:MenuItem NavigateUrl="~/About.aspx" Text="About"/>
+                    </Items>
+                </asp:Menu>--%>
+            </div>
+        </div>
+        <div class="main">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server"/>
+        </div>
+        <div class="clear">
+        </div>
+    </div>
+    <div class="footer">
+        
+    </div>
+    </form>
+
+
+
+    
+   
+
+
+
+
+</body>
+</html>
+
